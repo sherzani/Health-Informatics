@@ -1,0 +1,73 @@
+---
+title: "Coronavirus Exploratory Data Analysis"
+author: "Zainab Sherani"
+date: "03-14-20"
+---
+
+# Set Up Libraries
+```{r results='hide', message=FALSE, warning=FALSE}
+library(dplyr)
+```
+
+# Introduction
+The coronavirus pandemic originated in Wuhan, China in December 2019 and has since spread throughout the world. As of March 14, there are 152,000 reported cases in 125 countries, and more than 5,700 deaths (New York Times, 2020).The disease is highly contagious and can spread by the droplets of a sick person when they talk, sneeze, or breathe. Symptoms can take two to 14 days to appear and include fevers, shortness of breath, and persistent chest pain (Sheikh et al., 2020). These symptoms vary in severity by age and health status and those over 60, and particularly those over 80, are the most vulnerable (Hafner, 2020). Since treatement to create a vaccine is at least a year away, everyone is encouraged to practice prevention to curtail its spread. Prevention strategies include washing hands, social-distancing, and avoiding touching one's face (New York Times, 2020). 
+
+# Data Cleaning/ Preparation
+In this step, the coronavirus and comorbidity data are read in. The coronavirus dataset is a subset of patients' tested for Covid-19 around the world. It has columns identifying the patient, their age, coronavirus test result, country of origin, race, ethnicity, and death result. The comorbidity dataset includes a column for ID and a corresponding disease. The two datasets were merged by ID. Age values greater than or equal to 120 were considered implausible and recoded to NA. Additionally, any country values of "Mainland China" were essentially the same name for "China" and were therefore recoded to "China." 
+```{r}
+# Set working directory 
+setwd("/Users/zainabsherani/Desktop/INST408F/HW One")
+
+# Load both files
+cor <- read.csv("coronavirus.csv", header=T)
+mor <- read.csv("comorbidity.csv", header=T)
+
+# Merge the two datasets, keeping observations that exist in both files
+corona <- inner_join(cor, mor, by="ID")
+
+# Recode age values >= 120 to NA
+corona$Age[corona$Age >= 120] <- NA
+
+# Recode any values of ‘Mainland China’ to 'China'
+corona$Country[corona$Country=="Mainland China"] <- "China"
+```
+
+# Exploratory Data Analysis
+The dataset consisted of 1764 observations, 12 variables, and 49.9% of the patients in this dataset were female. 28 was the median age of those who tested postive, 28.4 was the mean age of patients who died from coronavirus, and the standard deviation of those who died from it was 15.9. This dataset consisted of 51.3%, 0.5%, and 10.1% of patients who tested positive from China, Italy, and the US, respectively. Of all patients who tested positive, 3.9% had Heart Disease, 7.5% had HIV, 1.9% had liver disease and 15.3% had Lupus.   
+```{r}
+# Number of observations and variables
+dim(corona)
+
+# Percentage of female patients 
+round(prop.table(table(corona$Sex == "F")) * 100, 1)
+
+# Median age of patients who have coronavirus
+round(median(corona$Age[corona$CoronaVirus == 1], na.rm=T), 1)
+
+# Mean age of patients who died from coronavirus
+round(mean(corona$Age[corona$Death == 1], na.rm=T), 1)
+
+# Standard Deviation of patients who died from coronavirus
+round(sd(corona$Age[corona$Death == 1], na.rm=T), 1)
+
+# Percentage of patients with coronavirus from China, Italy, and the US
+round(prop.table(table(corona$Country[corona$CoronaVirus == 1])) * 100, 1)
+
+# Comorbidities w/ percentages associated with patients who have coronavirus
+round(prop.table(table(corona$Comorbidity[corona$CoronaVirus == 1])) * 100, 1)
+```
+
+# Data visualization
+According to Figure 1, there is very little difference in age between those that tested positive or negative. The minimum age for those who test positive or negative is the same. This is a huge surprise because testing among children has been rare especially in infants. The median age for those who tested positive is slightly lower than those who tested negative. This finding contradicts that those over the age of 60 and specifically, those over 80 are most vulnerable (Hafner, 2020). Interestingly, although the disease has largely targeted the elderly there is only one outlier, and that is of someone over 80 who tested negative for the disease. The boxes are very small suggesting a similar range of people were tested (20 to 40) in this dataset. The whiskers on both plots are very similar in size, confirming that there is little variability in age of the first and fourth quartiles.  
+```{r}
+# Create a boxplot of the age variable, by the coronavirus variable
+plot <- boxplot(Age~CoronaVirus, data = corona, 
+                main="Figure1: Covid-19 Results by Age", xlab="Coronavirus Result", ylab ="Age") 
+```
+
+# References
+  How Bad Will the Coronavirus Outbreak Get? Here Are 6 Key Factors - The New York Times. (n.d.). Retrieved March 15, 2020, from https://www.nytimes.com/interactive/2020/world/asia/china-coronavirus-contain.html?action=click&pgtype=Article&state=default&module=styln-coronavirus&variant=show&region=TOP_BANNER&context=storyline_menu#transmission
+ 
+  How to Protect Older People From the Coronavirus - The New York Times. (n.d.). Retrieved March 15, 2020, from https://www.nytimes.com/2020/03/14/health/coronavirus-elderly-protection.html
+ 
+  The Coronavirus Outbreak - The New York Times. (n.d.). Retrieved March 15, 2020, from https://www.nytimes.com/news-event/coronavirus
