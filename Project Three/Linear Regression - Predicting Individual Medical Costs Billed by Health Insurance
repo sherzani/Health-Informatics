@@ -1,0 +1,90 @@
+---
+title: "Linear Regression - Predicting Individual Medical Costs Billed by Health Insurance"
+author: "Zainab Sherani"
+subtitle: "4/18/2020"
+output: html_document
+---
+
+## Exploratory Data Analysis
+There are 1338 observations and 7 variables. In this dataset, 50.52317% are males, 42.899% do not have any children, 79.52% are non-smokers, and 27.20% reside in the southeast region of the U.S. The mean age is 39.21 and the standard deviation is 14.05. The mean BMI is 30.66 with a standard deviation of 6.10. The mean charges are $13270.42 with a standard deviation of $12110.01.
+```{r warning=FALSE, message=FALSE, results="hide", include=FALSE}
+library(ggplot2)
+library(summarytools)
+
+# import insurance.csv
+setwd("/Users/zainabsherani/Desktop/INST408F/HW 3")
+is <- read.csv("insurance.csv")
+
+# number of observations
+nrow(is)
+
+# number of variables 
+ncol(is)
+
+# percentage of obs. in sex, children, smoker, and region variables
+prop.table(table(is$sex)) * 100
+prop.table(table(is$children)) * 100
+prop.table(table(is$smoker)) * 100
+prop.table(table(is$region)) * 100
+
+# mean and sd for continuous variables:age, bmi, and charges
+mean(is$age)
+sd(is$age)
+
+mean(is$bmi)
+sd(is$bmi)
+
+mean(is$charges)
+sd(is$charges)
+
+```
+
+
+## Data Visualization
+Figure 1 shows that the median and lower 50% of charges for males and females are similar. There is a wider range of charges for females in the upper quartile compared to males. Figure 2 shows that the median charges for any number of children are similar with a wider range of charges for the upper 50%. Figure 3 shows that people who smoke have overall higher medical bills charged by their health insurance. The median charges for smokers is over $3000 while it is less than $1000 for non-smokers. The outliers for non-smokers falls in the 50% of charges for smokers. Figure 4 shows that the median charges as well as the lower 75% of costs are similar for all regions. Figure 5 shows that higher bmi is associated with higher medical costs with the points scattered much higher. Figure 6 shows that on average those who are older tend to have higher medical costs. 
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+
+ggplot(data=is) +
+    geom_boxplot(mapping = aes(x=as.factor(sex), y=charges,fill=as.factor(sex))) +
+   labs(title="Figure 1: Plot of Sex by Individual Medical Costs Billed by Health Insurance ",x="Sex", y = "Charges", fill="Sex")
+
+ggplot(data=is) +
+    geom_boxplot(mapping = aes(x=as.factor(children), y=charges,fill=as.factor(children))) +
+   labs(title="Figure 2: Plot of Number of Children by Individual Medical Costs Billed by Health Insurance ",x="Number of Children", y = "Charges", fill="Number of Children")
+
+ggplot(data=is) +
+    geom_boxplot(mapping = aes(x=as.factor(smoker), y=charges,fill=as.factor(smoker))) +
+   labs(title="Figure 3: Plot of Smoking Status by Medical Costs Billed by Health Insurance ",x="Smoking Status", y = "Charges", fill="Smoking Status")
+
+ggplot(data=is) +
+    geom_boxplot(mapping = aes(x=as.factor(region), y=charges,fill=as.factor(region))) +
+   labs(title="Figure 4: Plot of Region by Individual Medical Costs Billed by Health Insurance ",x="Region", y = "Charges", fill="Region")
+
+ggplot(data=is) +
+    geom_point(mapping = aes(x=bmi, y=charges, color=bmi)) +
+   labs(title="Figure 5: Plot of BMI by Individual Medical Costs Billed by Health Insurance ",x="BMI", y = "Charges")
+
+ggplot(data=is) +
+    geom_point(mapping = aes(x=age, y=charges, color=age)) +
+   labs(title="Figure 6: Plot of Age by Individual Medical Costs Billed by Health Insurance ",x="Age", y = "Charges")
+
+```
+
+## Multiple Linear Regression Results
+For a 1-year increase in the average age, the medical bill charges increases by an average of $257.19, holding all other variables in the model constant. As for a 1-point increase in the average BMI, the medical bill charges increases by an average of $336.91, holding all other variables in the model constant. The amount of medical charges for males is $128.16 less than those for females, holding all other variables in the model constant. The amount of medical charges for smokers is $23836.41 higher than those for non-smokers, holding all other variables in the model constant. Medical charges were $380.04 less in the northwest region than those in the northeast region, holding all other variables in the model constant.Medical charges were $1033.14 less in the southeast region than those in the northeast region, holding all other variables in the model constant. Medical charges were $952.89.14 less in the southwest region than those in the northeast region, holding all other variables in the model constant. The age, bmi, 2 children, and smoking status were all significant for on average higher medical charges.
+
+```{r warning=FALSE, message=FALSE, results="hide", include=FALSE}
+# insert linear regression code
+
+multi <- lm(charges ~ age + factor(sex) + bmi + factor(children) + factor(smoker) + factor(region), data = is)
+summary(multi)
+```
+
+## Linear Regression Assumptions
+We have violated the homoscedasticity assumption because the red line in the scale-location plot has a positive slope to it and the data points are not randomly spread out. 
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+# regression assumption plots code
+plot(multi)
+```
+
