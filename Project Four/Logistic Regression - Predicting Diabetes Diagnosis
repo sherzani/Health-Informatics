@@ -1,0 +1,98 @@
+---
+title: "Logistic Regression - Predicting Diabetes Diagnosis"
+author: "Zainab Sherani"
+subtitle: "4/26/2020"
+output: html_document
+---
+## Data Cleaning/Preparation
+A new column called height.si was created to convert the height to SI units by multiplying the height variable by 0.0254. A new column called weight.si was created to convert the weight to SI units by multiplying the weight variable by 0.453592. A bmi column was created using height.si and weight.si. A categorical bmi variable named bmi_categorised was created with bmis less than 18.5 as "underweight," bmis between 18.5 and 25 as "normal," bmis between 25 and 30 as "overweight," and bmis greater than 30 as "obese." All other values were changed to NAs. The insurance variable was recoded to reflect the value labels with 0 representing "none" or no insurance, 1 representing "government" and 2 representing "private."  The smoking variable was recoded to reflect the value lables with 1 representing "current," 2 representing "never" and 3 representing "ex-smoker." 
+```{r warning=FALSE, message=FALSE, results="hide"}
+library(ggplot2)
+
+setwd("/Users/zainabsherani/Desktop/INST408F/HW 4")
+ds <- read.csv("diabetes.csv")
+
+# height variable converted to SI units by multiplying the height variable by 0.0254 
+ds$height.si <- ds$height * 0.0254
+
+# weight variable converted to SI units by multiplying the weight variable by 0.453592
+ds$weight.si <- ds$weight * 0.453592
+
+# Create a categorical BMI variable named bmi_categorised using the following conditions
+ds$bmi <- ds$weight.si/(ds$height.si^2)
+
+# Create a categorical BMI variable named bmi_categorised with bmi < 18.5 as "underweight" etc.
+ds$bmi_categorised = ds$bmi
+
+ds$bmi_categorised <- ifelse(ds$bmi_categorised < 18.5, "underweight", 
+       ifelse(ds$bmi_categorised >= 18.5 & ds$bmi_categorised <= 25, "normal", 
+              ifelse(ds$bmi_categorised > 25 & ds$bmi_categorised <= 30, "overweight", 
+                     ifelse(ds$bmi_categorised > 30, "obese", NA))))
+
+# Recode the insurance variable to reflect the value labels
+ifelse(ds$insurance == 0, "none", ifelse(ds$insurance == 1, "government", "private"))
+
+# Recode the smoking variable to reflect the value labels
+ifelse(ds$smoking == 1, "current", ifelse(ds$smoking == 2, "never", "ex-smoker"))
+
+```
+
+
+## Exploratory Data Analysis
+There are 403 observations in this dataset. There are 38.29% of people who are obese, 58.06% who are female, and 15.38% who have diabetes. The average age in the dataset is 46.85 and the average bmi is 28.79.
+```{r warning=FALSE, message=FALSE, results="hide"}
+
+# number of observations
+nrow(ds)
+
+# percentage of observations in each bmi_categorised category
+prop.table(table(ds$bmi_categorised)) * 100
+
+# percentage of observations in each gender category
+prop.table(table(ds$gender)) * 100
+
+# percentage of observations in each diabetes category
+prop.table(table(ds$dm)) * 100
+
+# average age of individuals in the dataset
+mean(ds$age)
+
+# average BMI of individuals in the dataset
+mean(ds$bmi, na.rm = T)
+
+```
+
+
+## Data Visualization
+Figure 1 shows that there are 125 to 150 people of those who have private, government or no insurance. Figure 2 shows that there are 225 people who have never smoked, close to 125 who currently smoke, and over 50 people who are ex-smokers. Figure 3 shows that there is no relationship between bmi and cholestrol based on the sample in the dataset. Figure 4 shows that most people are between the ages of 25 and 80 in the dataset with the highest number coming from those in their late thirties to 40s. 
+```{r warning=FALSE, message=FALSE}
+
+# bar charts for the labeled insurance and smoking variables
+ggplot(data=ds) +
+    geom_bar(mapping = aes(x=insurance, fill=insurance), fill="light blue") +
+   labs(title="Figure 1: Comparison of Different Insurance Types",x="Insurance (0=none, 1=government, 2=private)", y = "Number of People", fill="Insurance")
+
+ggplot(data=ds) +
+    geom_bar(mapping = aes(x=smoking, fill=smoking), fill="light green") +
+   labs(title="Figure 2: Counts of of Smoking Values",x="Smoking (1=current, 2=never, 3=ex-smoker)", y = "Number of People", fill="Smoking")
+
+# scatter plot that shows the relationship between BMI (independent variable) and cholesterol (dependent variable)
+ggplot(data=ds) +
+    geom_point(mapping = aes(x=bmi, y=chol)) +
+   labs(title="Figure 3: Relationship between BMI and Cholestrol",x="BMI", y = "Cholestrol Levels")
+
+# histogram of the age variable
+ggplot(data=ds) +
+    geom_histogram(mapping = aes(x=age), fill="gold", color="orangered", binwidth = 5) +
+   labs(title="Figure 4: Count of Ages",x="Ages", y = "Number of People Based on Age")
+
+```
+
+## Logistic Regression Results
+A 1-year increase in age causes the log odds of diabetes to increase by 0.055454, holding the other independent variables constant. A 1-value increase in BMI causes the log odds of diabetes to increase by 0.073879, holding the other independent variables constant. The log odds of having diabetes between a female and a male is  0.244852, holding the other independent variables constant.
+```{r warning=FALSE, message=FALSE, results="hide"}
+
+# logistic regression model with diabetes (dm) as the outcome variable, and age, gender, and BMI as the predictors.
+fit1 <- glm(dm ~ age + factor(gender) + bmi, data = ds, family = "binomial")
+summary(fit1)
+```
